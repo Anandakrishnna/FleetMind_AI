@@ -125,6 +125,17 @@ def calculated_answer(question: str) -> str:
     best = max(today, key=lambda s:s.collection) if today else None
     return f"FleetMind has recorded ₹{revenue-expense:,.0f} profit today. {best.bus_number if best else 'No bus'} has the highest collection at ₹{best.collection if best else 0:,.0f}."
 
+def ai_answer(question: str) -> str | None:
+    """Ask the model to communicate only from the compact live financial context."""
+    if not os.getenv("OPENAI_API_KEY") or OpenAI is None:
+        return None
+    today = [s for s in sheets if s.service_date == date.today()]
+    context = [{"bus": s.bus_number, "collection": s.collection, "expense": s.expense, "balance": s.balance, "expenses": s.expenses} for s in today]
+    instructions = "You are FleetMind, a concise financial copilot for a Kerala bus fleet. Answer only using the provided JSON. Use INR formatting, state when information is unavailable, and never invent values. Keep answers under 70 words."
+    response = OpenAI().responses.create(model=os.getenv("OPENAI_MODEL", "gpt-5.6-sol"), instructions=instructions, input=f"Today's collection sheet data: {json.dumps(context)}\n\nOwner question: {question}")
+    answer = response.output_text.strip()
+    return answer or None
+
 @app.get("/health")
 def health(): return {"status":"ok", "mode":"ai" if os.getenv("OPENAI_API_KEY") else "demo"}
 
@@ -172,4 +183,10 @@ async def extract_sheet(file: UploadFile = File(...)):
 @app.post("/api/chat", response_model=ChatResponse)
 def chat(request: ChatRequest):
     # Deterministic calculation fallback guarantees every demo question is answered.
+    try:
+        answer = ai_answer(request.message)
+        if answer:
+            return ChatResponse(answer=answer, source="ai")
+    except Exception:
+        pass
     return ChatResponse(answer=calculated_answer(request.message), source="calculated")
