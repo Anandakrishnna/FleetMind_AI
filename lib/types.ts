@@ -1,0 +1,5 @@
+export type ExpenseKey = "diesel" | "oil" | "tyre" | "spare_parts" | "workshop" | "stand_fee" | "washing" | "others";
+export type Bus = { id: string; bus_number: string; vehicle_number: string; route_name: string; driver_name: string; conductor_name: string; status: "active" | "maintenance" | "inactive" };
+export type SheetInput = { bus_id: string; service_date: string; driver_name: string; conductor_name: string; batha: number; driver_collection: number; conductor_collection: number; checker_collection: number; total: number; collection: number; expense: number; balance: number; expenses: Partial<Record<ExpenseKey, number>>; confidence: number };
+export type CollectionSheet = SheetInput & { id: string; bus_number: string; vehicle_number: string; created_at: string };
+export type Dashboard = { metrics: { revenue: number; expense: number; profit: number; bus_count: number; margin: number }; chart: { date: string; revenue: number; expense: number }[]; recent: CollectionSheet[]; insights: { title: string; body: string; kind: "observation" | "warning" | "success" }[] };
