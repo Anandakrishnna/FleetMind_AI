@@ -16,7 +16,7 @@ except ImportError:  # Local demo mode remains fully usable without optional AI 
     OpenAI = None
 
 app = FastAPI(title="FleetMind AI API", version="1.0.0")
-app.add_middleware(CORSMiddleware, allow_origins=os.getenv("FRONTEND_ORIGIN", "http://localhost:3000").split(","), allow_methods=["*"], allow_headers=["*"], allow_credentials=True)
+app.add_middleware(CORSMiddleware, allow_origins=os.getenv("FRONTEND_ORIGIN", "http://localhost:3000,http://127.0.0.1:3000").split(","), allow_methods=["*"], allow_headers=["*"], allow_credentials=True)
 
 ExpenseKey = Literal["diesel", "oil", "tyre", "spare_parts", "workshop", "stand_fee", "washing", "others"]
 
