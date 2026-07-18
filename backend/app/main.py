@@ -10,6 +10,21 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+def load_local_env() -> None:
+    """Load simple KEY=VALUE pairs for local runs without python-dotenv."""
+    env_path = os.path.join(os.path.dirname(__file__), "..", "..", ".env")
+    if not os.path.exists(env_path):
+        return
+    with open(env_path, encoding="utf-8") as env_file:
+        for raw_line in env_file:
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+load_local_env()
+
 try:
     from openai import OpenAI
 except ImportError:  # Local demo mode remains fully usable without optional AI dependency.
@@ -187,8 +202,13 @@ async def extract_sheet(file: UploadFile = File(...)):
     if not file.content_type or not file.content_type.startswith("image/"): raise HTTPException(415, "Please upload an image file")
     raw = await file.read()
     if len(raw) > 10_000_000: raise HTTPException(413, "Image must be smaller than 10MB")
-    try: return ai_extract(file.content_type, raw)
-    except Exception: return empty_extraction()
+    try:
+        return ai_extract(file.content_type, raw)
+    except Exception as exc:
+        message = str(exc).lower()
+        if "quota" in message or "rate_limit" in message or "429" in message:
+            raise HTTPException(502, "Vision extraction is unavailable because the OpenAI API quota is exhausted. Add billing/credits or enter the sheet manually.") from exc
+        raise HTTPException(502, "Vision extraction failed. Check the OpenAI API key and try again, or enter the sheet manually.") from exc
 
 @app.post("/api/chat", response_model=ChatResponse)
 def chat(request: ChatRequest):
