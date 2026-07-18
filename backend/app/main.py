@@ -104,7 +104,7 @@ def bus_report(bus_id: str) -> dict:
 
 def empty_extraction() -> SheetInput:
     """Return an honest editable draft when vision extraction is unavailable."""
-    return SheetInput(confidence=0)
+    return SheetInput(bus_id="", confidence=0)
 
 def ai_extract(content_type: str, payload: bytes) -> SheetInput:
     if not os.getenv("OPENAI_API_KEY") or OpenAI is None:
