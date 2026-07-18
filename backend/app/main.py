@@ -102,12 +102,13 @@ def bus_report(bus_id: str) -> dict:
         "top_expense": {"label": top_key.replace("_", " ").title(), "value": expense_totals.get(top_key, 0)},
     }
 
-def demo_extraction() -> SheetInput:
-    return SheetInput(bus_id="bus-1", driver_name="Ramesh", conductor_name="Akhil", batha=250, driver_collection=1250, conductor_collection=1850, checker_collection=300, total=3650, collection=18400, expense=6240, balance=12160, expenses={"diesel":3500,"oil":220,"tyre":0,"spare_parts":180,"workshop":900,"stand_fee":650,"washing":220,"others":570}, confidence=.94)
+def empty_extraction() -> SheetInput:
+    """Return an honest editable draft when vision extraction is unavailable."""
+    return SheetInput(confidence=0)
 
 def ai_extract(content_type: str, payload: bytes) -> SheetInput:
     if not os.getenv("OPENAI_API_KEY") or OpenAI is None:
-        return demo_extraction()
+        return empty_extraction()
     encoded = base64.b64encode(payload).decode("ascii")
     schema = {"type":"object","properties":{"bus_id":{"type":"string"},"driver_name":{"type":"string"},"conductor_name":{"type":"string"},"batha":{"type":"number"},"driver_collection":{"type":"number"},"conductor_collection":{"type":"number"},"checker_collection":{"type":"number"},"total":{"type":"number"},"collection":{"type":"number"},"expense":{"type":"number"},"balance":{"type":"number"},"expenses":{"type":"object"},"confidence":{"type":"number"}},"required":["bus_id","collection","expense","balance","expenses"]}
     response = OpenAI().responses.create(model=os.getenv("OPENAI_MODEL", "gpt-5.6-sol"), input=[{"role":"user","content":[{"type":"input_text","text":"Extract this Kerala private-bus collection sheet. Return only numeric values where applicable. Use bus-1 if the bus cannot be matched."},{"type":"input_image","image_url":f"data:{content_type};base64,{encoded}"}]}], text={"format":{"type":"json_schema","name":"collection_sheet","schema":schema,"strict":False}})
@@ -187,7 +188,7 @@ async def extract_sheet(file: UploadFile = File(...)):
     raw = await file.read()
     if len(raw) > 10_000_000: raise HTTPException(413, "Image must be smaller than 10MB")
     try: return ai_extract(file.content_type, raw)
-    except Exception: return demo_extraction()
+    except Exception: return empty_extraction()
 
 @app.post("/api/chat", response_model=ChatResponse)
 def chat(request: ChatRequest):
