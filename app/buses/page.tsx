@@ -69,7 +69,14 @@ export default function BusesPage() {
 
         <div className="mt-7 grid gap-5 lg:grid-cols-[360px_1fr]">
           <aside className="space-y-3">
-            {buses.map(bus => (
+            {buses.length === 0 ? (
+              <div className="card p-6">
+                <BusFront className="text-blue-300" size={24} />
+                <p className="mt-4 font-semibold">No buses yet</p>
+                <p className="mt-2 text-sm leading-6 text-slate-400">Add your first bus to start entering collection sheets and viewing reports.</p>
+                <button onClick={() => setDraft(blank())} className="btn-primary mt-5 w-full"><Plus size={17} /> Add your first bus</button>
+              </div>
+            ) : buses.map(bus => (
               <div key={bus.id} role="button" tabIndex={0} onClick={() => setSelectedId(bus.id)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setSelectedId(bus.id); }} className={`card w-full cursor-pointer p-4 text-left transition hover:border-blue-400/35 focus:outline-none focus:ring-2 focus:ring-blue-400/40 ${selectedId === bus.id ? "border-blue-400/45 bg-blue-500/[.08]" : ""}`}>
                 <div className="flex items-start justify-between gap-3">
                   <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-blue-400/10 text-blue-300"><BusFront size={19} /></span>

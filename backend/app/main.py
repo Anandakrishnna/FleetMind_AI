@@ -63,43 +63,10 @@ class ChatResponse(BaseModel):
     answer: str
     source: Literal["ai", "calculated"]
 
-BUS_SEED = [
-    Bus(id="bus-1", bus_number="MTR 01", vehicle_number="KL-07-AB-2211", route_name="Kozhikode to Kannur", driver_name="Ramesh", conductor_name="Akhil"),
-    Bus(id="bus-2", bus_number="MTR 02", vehicle_number="KL-07-BC-3198", route_name="Kozhikode to Wayanad", driver_name="Suresh", conductor_name="Nikhil"),
-    Bus(id="bus-3", bus_number="MTR 03", vehicle_number="KL-11-CD-7720", route_name="Kozhikode to Vadakara", driver_name="Manoj", conductor_name="Vishnu"),
-    Bus(id="bus-4", bus_number="MTR 04", vehicle_number="KL-56-DE-4088", route_name="Kozhikode to Koyilandy", driver_name="Jithin", conductor_name="Rafi"),
-    Bus(id="bus-5", bus_number="MTR 05", vehicle_number="KL-18-EF-9012", route_name="Kozhikode to Thalassery", driver_name="Shaji", conductor_name="Binu"),
-]
-
-def make_seed() -> list[CollectionSheet]:
-    rows: list[CollectionSheet] = []
-    revenue = [
-        [18400,16900,15800,17200,16500],
-        [17800,16000,15300,16800,15900],
-        [14200,14900,17100,15600,16200],
-        [15700,15400,13800,14500,15100],
-        [14500,16600,15100,15800,14900],
-        [16800,15200,17400,16100,15500],
-        [17300,14800,16500,15900,16700],
-    ]
-    expense = [
-        [6240,5850,5410,5980,5720],
-        [6010,5700,5250,5820,5480],
-        [4930,5150,5880,5380,5610],
-        [5400,5300,4800,5010,5210],
-        [5050,5700,5210,5480,5160],
-        [5820,5250,6010,5560,5380],
-        [5980,5120,5700,5500,5790],
-    ]
-    for day_index, (revenues, costs) in enumerate(zip(revenue, expense)):
-        for index, (collection, cost) in enumerate(zip(revenues, costs)):
-            bus = BUS_SEED[(index + day_index) % len(BUS_SEED)]
-            diesel = round(cost * .56, 2)
-            rows.append(CollectionSheet(id=f"sheet-{day_index}-{index}", bus_id=bus.id, bus_number=bus.bus_number, vehicle_number=bus.vehicle_number, service_date=date.today()-timedelta(days=day_index), driver_name=bus.driver_name, conductor_name=bus.conductor_name, driver_collection=1200, conductor_collection=1700, checker_collection=280, total=3180, collection=collection, expense=cost, balance=collection-cost, expenses={"diesel":diesel,"oil":round(cost*.04,2),"tyre":round(cost*.05,2),"spare_parts":round(cost*.06,2),"workshop":round(cost*.1,2),"stand_fee":round(cost*.08,2),"washing":round(cost*.03,2),"others":round(cost*.08,2)}, created_at=(date.today()-timedelta(days=day_index)).isoformat()))
-    return rows
-
-buses: list[Bus] = BUS_SEED.copy()
-sheets: list[CollectionSheet] = make_seed()
+# Start with an empty workspace. Operators add their own buses and collection
+# sheets through the UI; no demo records are inserted on backend startup.
+buses: list[Bus] = []
+sheets: list[CollectionSheet] = []
 
 def summary() -> dict:
     today = [s for s in sheets if s.service_date == date.today()]
