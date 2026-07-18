@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 import json
 import os
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Literal
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
@@ -73,8 +73,24 @@ BUS_SEED = [
 
 def make_seed() -> list[CollectionSheet]:
     rows: list[CollectionSheet] = []
-    revenue = [[18400,16900,15800],[17800,16000,15300],[14200,14900,17100],[15700,15400,13800],[14500,16600,15100]]
-    expense = [[6240,5850,5410],[6010,5700,5250],[4930,5150,5880],[5400,5300,4800],[5050,5700,5210]]
+    revenue = [
+        [18400,16900,15800,17200,16500],
+        [17800,16000,15300,16800,15900],
+        [14200,14900,17100,15600,16200],
+        [15700,15400,13800,14500,15100],
+        [14500,16600,15100,15800,14900],
+        [16800,15200,17400,16100,15500],
+        [17300,14800,16500,15900,16700],
+    ]
+    expense = [
+        [6240,5850,5410,5980,5720],
+        [6010,5700,5250,5820,5480],
+        [4930,5150,5880,5380,5610],
+        [5400,5300,4800,5010,5210],
+        [5050,5700,5210,5480,5160],
+        [5820,5250,6010,5560,5380],
+        [5980,5120,5700,5500,5790],
+    ]
     for day_index, (revenues, costs) in enumerate(zip(revenue, expense)):
         for index, (collection, cost) in enumerate(zip(revenues, costs)):
             bus = BUS_SEED[(index + day_index) % len(BUS_SEED)]
@@ -94,7 +110,30 @@ def summary() -> dict:
         chart.append({"date": (date.today()-timedelta(days=days_ago)).strftime("%a"), "revenue": sum(s.collection for s in current), "expense": sum(s.expense for s in current)})
     diesel = sum(s.expenses.get("diesel", 0) for s in today)
     margin = round((revenue-expense)/revenue*100) if revenue else 0
-    return {"metrics": {"revenue":revenue,"expense":expense,"profit":revenue-expense,"bus_count":len([b for b in buses if b.status == "active"]),"margin":margin}, "chart":chart, "recent": sorted(sheets, key=lambda s:s.created_at, reverse=True)[:5], "insights":[Insight(title="Strong operating margin",body=f"Today's fleet profit margin is {margin}%, led by MTR 01.",kind="success"),Insight(title="Diesel is your largest cost",body=f"Fuel represents {round(diesel/expense*100) if expense else 0}% of today's expenses. Check refuelling rates.",kind="warning")]}
+    return {"metrics": {"revenue":revenue,"expense":expense,"profit":revenue-expense,"bus_count":len([b for b in buses if b.status == "active"]),"margin":margin}, "chart":chart, "recent": sorted(sheets, key=lambda s:s.created_at, reverse=True)[:10], "insights":[Insight(title="Strong operating margin",body=f"Today's fleet profit margin is {margin}%, led by MTR 01.",kind="success"),Insight(title="Diesel is your largest cost",body=f"Fuel represents {round(diesel/expense*100) if expense else 0}% of today's expenses. Check refuelling rates.",kind="warning")]}
+
+def bus_report(bus_id: str) -> dict:
+    bus = next((b for b in buses if b.id == bus_id), None)
+    if not bus:
+        raise HTTPException(404, "Bus not found")
+    bus_sheets = [s for s in sheets if s.bus_id == bus_id]
+    revenue, expense = sum(s.collection for s in bus_sheets), sum(s.expense for s in bus_sheets)
+    categories = ["diesel", "oil", "tyre", "spare_parts", "workshop", "stand_fee", "washing", "others"]
+    expense_totals = {key: sum(s.expenses.get(key, 0) for s in bus_sheets) for key in categories}
+    top_key = max(expense_totals, key=expense_totals.get) if expense_totals else "diesel"
+    chart = []
+    for days_ago in range(6, -1, -1):
+        current_date = date.today() - timedelta(days=days_ago)
+        current = [s for s in bus_sheets if s.service_date == current_date]
+        day_revenue, day_expense = sum(s.collection for s in current), sum(s.expense for s in current)
+        chart.append({"date": current_date.strftime("%a"), "revenue": day_revenue, "expense": day_expense, "profit": day_revenue - day_expense})
+    return {
+        "bus": bus,
+        "metrics": {"revenue": revenue, "expense": expense, "profit": revenue-expense, "margin": round((revenue-expense)/revenue*100) if revenue else 0, "sheet_count": len(bus_sheets), "diesel": expense_totals.get("diesel", 0)},
+        "chart": chart,
+        "recent": sorted(bus_sheets, key=lambda s:s.created_at, reverse=True)[:6],
+        "top_expense": {"label": top_key.replace("_", " ").title(), "value": expense_totals.get(top_key, 0)},
+    }
 
 def demo_extraction() -> SheetInput:
     return SheetInput(bus_id="bus-1", driver_name="Ramesh", conductor_name="Akhil", batha=250, driver_collection=1250, conductor_collection=1850, checker_collection=300, total=3650, collection=18400, expense=6240, balance=12160, expenses={"diesel":3500,"oil":220,"tyre":0,"spare_parts":180,"workshop":900,"stand_fee":650,"washing":220,"others":570}, confidence=.94)
@@ -145,6 +184,9 @@ def get_dashboard(): return summary()
 @app.get("/api/buses", response_model=list[Bus])
 def get_buses(): return buses
 
+@app.get("/api/buses/{bus_id}/report")
+def get_bus_report(bus_id: str): return bus_report(bus_id)
+
 @app.post("/api/buses", response_model=Bus, status_code=201)
 def create_bus(bus: Bus):
     if any(b.vehicle_number.lower() == bus.vehicle_number.lower() for b in buses): raise HTTPException(409, "A bus with this vehicle number already exists")
@@ -169,7 +211,7 @@ def get_sheets(): return sorted(sheets, key=lambda s:s.created_at, reverse=True)
 def save_sheet(sheet: SheetInput):
     bus = next((b for b in buses if b.id == sheet.bus_id), None)
     if not bus: raise HTTPException(422, "Select a valid bus")
-    saved = CollectionSheet(id=f"sheet-manual-{len(sheets)+1}", bus_number=bus.bus_number, vehicle_number=bus.vehicle_number, created_at=date.today().isoformat(), **sheet.model_dump())
+    saved = CollectionSheet(id=f"sheet-manual-{len(sheets)+1}", bus_number=bus.bus_number, vehicle_number=bus.vehicle_number, created_at=datetime.now().isoformat(), **sheet.model_dump())
     sheets.append(saved); return saved
 
 @app.post("/api/scanner/extract", response_model=SheetInput)
