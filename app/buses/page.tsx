@@ -100,8 +100,8 @@ export default function BusesPage() {
           </main>
         </div>
 
-        {draft && <div className="fixed inset-0 z-40 grid place-items-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="card w-full max-w-lg p-6">
+        {draft && <div className="fixed inset-0 z-40 grid place-items-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm">
+          <div className="card max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto p-6">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold">{buses.some(b => b.id === draft.id) ? "Edit bus" : "Add a bus"}</h2>
               <button onClick={() => setDraft(null)} className="text-slate-500"><X /></button>
