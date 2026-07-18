@@ -21,7 +21,8 @@ def load_local_env() -> None:
             if not line or line.startswith("#") or "=" not in line:
                 continue
             key, value = line.split("=", 1)
-            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+            cleaned_value = value.strip().replace('"', '').replace("'", '')
+            os.environ.setdefault(key.strip(), cleaned_value)
 
 load_local_env()
 
@@ -129,7 +130,17 @@ def ai_extract(content_type: str, payload: bytes) -> SheetInput:
     response = OpenAI().responses.create(model=os.getenv("OPENAI_MODEL", "gpt-5.6-sol"), input=[{"role":"user","content":[{"type":"input_text","text":"Extract this Kerala private-bus collection sheet. Return only numeric values where applicable. Use bus-1 if the bus cannot be matched."},{"type":"input_image","image_url":f"data:{content_type};base64,{encoded}"}]}], text={"format":{"type":"json_schema","name":"collection_sheet","schema":schema,"strict":False}})
     data = json.loads(response.output_text)
     data.setdefault("bus_id", "bus-1")
-    data.setdefault("expenses", {})
+    aliases = {"oil_grease": "oil", "spare_parts": "spare_parts", "spare parts": "spare_parts", "stand fee": "stand_fee"}
+    normalized_expenses: dict[str, float] = {}
+    for raw_key, raw_value in (data.get("expenses") or {}).items():
+        key = str(raw_key).strip().lower().replace("-", "_")
+        key = aliases.get(key, key)
+        if key in {"diesel", "oil", "tyre", "spare_parts", "workshop", "stand_fee", "washing", "others"}:
+            try:
+                normalized_expenses[key] = float(raw_value or 0)
+            except (TypeError, ValueError):
+                normalized_expenses[key] = 0
+    data["expenses"] = normalized_expenses
     return SheetInput.model_validate(data)
 
 def calculated_answer(question: str) -> str:
