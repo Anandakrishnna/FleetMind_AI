@@ -64,11 +64,11 @@ class ChatResponse(BaseModel):
     source: Literal["ai", "calculated"]
 
 BUS_SEED = [
-    Bus(id="bus-1", bus_number="MTR 01", vehicle_number="KL-07-AB-2211", route_name="Kozhikode → Kannur", driver_name="Ramesh", conductor_name="Akhil"),
-    Bus(id="bus-2", bus_number="MTR 02", vehicle_number="KL-07-BC-3198", route_name="Kozhikode → Wayanad", driver_name="Suresh", conductor_name="Nikhil"),
-    Bus(id="bus-3", bus_number="MTR 03", vehicle_number="KL-11-CD-7720", route_name="Kozhikode → Vadakara", driver_name="Manoj", conductor_name="Vishnu"),
-    Bus(id="bus-4", bus_number="MTR 04", vehicle_number="KL-56-DE-4088", route_name="Kozhikode → Koyilandy", driver_name="Jithin", conductor_name="Rafi"),
-    Bus(id="bus-5", bus_number="MTR 05", vehicle_number="KL-18-EF-9012", route_name="Kozhikode → Thalassery", driver_name="Shaji", conductor_name="Binu"),
+    Bus(id="bus-1", bus_number="MTR 01", vehicle_number="KL-07-AB-2211", route_name="Kozhikode to Kannur", driver_name="Ramesh", conductor_name="Akhil"),
+    Bus(id="bus-2", bus_number="MTR 02", vehicle_number="KL-07-BC-3198", route_name="Kozhikode to Wayanad", driver_name="Suresh", conductor_name="Nikhil"),
+    Bus(id="bus-3", bus_number="MTR 03", vehicle_number="KL-11-CD-7720", route_name="Kozhikode to Vadakara", driver_name="Manoj", conductor_name="Vishnu"),
+    Bus(id="bus-4", bus_number="MTR 04", vehicle_number="KL-56-DE-4088", route_name="Kozhikode to Koyilandy", driver_name="Jithin", conductor_name="Rafi"),
+    Bus(id="bus-5", bus_number="MTR 05", vehicle_number="KL-18-EF-9012", route_name="Kozhikode to Thalassery", driver_name="Shaji", conductor_name="Binu"),
 ]
 
 def make_seed() -> list[CollectionSheet]:

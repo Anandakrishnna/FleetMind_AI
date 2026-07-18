@@ -25,6 +25,8 @@ export default function BusesPage() {
   useEffect(() => { void load(); }, []);
   useEffect(() => {
     if (!selectedId) return;
+    setReport(null);
+    setError("");
     api.busReport(selectedId).then(setReport).catch(e => setError(e instanceof Error ? e.message : "Could not load bus report"));
   }, [selectedId]);
 
@@ -68,7 +70,7 @@ export default function BusesPage() {
         <div className="mt-7 grid gap-5 lg:grid-cols-[360px_1fr]">
           <aside className="space-y-3">
             {buses.map(bus => (
-              <button key={bus.id} onClick={() => setSelectedId(bus.id)} className={`card w-full p-4 text-left transition hover:border-blue-400/35 ${selectedId === bus.id ? "border-blue-400/45 bg-blue-500/[.08]" : ""}`}>
+              <div key={bus.id} role="button" tabIndex={0} onClick={() => setSelectedId(bus.id)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setSelectedId(bus.id); }} className={`card w-full cursor-pointer p-4 text-left transition hover:border-blue-400/35 focus:outline-none focus:ring-2 focus:ring-blue-400/40 ${selectedId === bus.id ? "border-blue-400/45 bg-blue-500/[.08]" : ""}`}>
                 <div className="flex items-start justify-between gap-3">
                   <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-blue-400/10 text-blue-300"><BusFront size={19} /></span>
                   <div className="flex gap-1" onClick={e => e.stopPropagation()}>
@@ -82,7 +84,7 @@ export default function BusesPage() {
                   <span className="text-slate-500">{bus.driver_name} | {bus.conductor_name}</span>
                   <span className="rounded-full bg-emerald-400/10 px-2 py-1 font-semibold text-emerald-300">{bus.status}</span>
                 </div>
-              </button>
+              </div>
             ))}
           </aside>
 
