@@ -2,17 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: dark; }
+:root {
+  color-scheme: light;
+  --canvas: #f7f3ea;
+  --surface: #fffdf8;
+  --line: #e6dfd1;
+  --charcoal: #1f2522;
+  --muted: #66706a;
+  --brand: #0f5f3a;
+  --brand-strong: #0a4a2d;
+}
+
 * { box-sizing: border-box; }
-body { margin:0; min-height:100vh; background:#07111f; color:#e8edf5; font-family: Arial, Helvetica, sans-serif; }
-button,input,select { font:inherit; }
-::selection { background:#2563eb; color:white; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--canvas);
+  color: var(--charcoal);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  text-rendering: optimizeLegibility;
+}
+button, input, select, textarea { font: inherit; }
+button, a, input, select, textarea { outline-color: var(--brand); }
+::selection { background: #d7f0df; color: var(--brand-strong); }
+
 @layer components {
-  .shell { @apply min-h-screen bg-[radial-gradient(ellipse_at_top,#132b4d_0%,#07111f_43%,#050b14_100%)]; }
-  .card { @apply rounded-2xl border border-white/10 bg-slate-950/45 shadow-glow backdrop-blur-xl; }
-  .label { @apply text-[11px] font-semibold uppercase tracking-[.14em] text-slate-500; }
-  .field { @apply w-full rounded-xl border border-white/10 bg-white/[.045] px-3 py-2.5 text-sm text-white outline-none transition focus:border-blue-400/70 focus:ring-2 focus:ring-blue-400/15; }
-  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50; }
-  .btn-primary { @apply btn bg-blue-500 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-400; }
-  .btn-ghost { @apply btn bg-white/[.055] text-slate-200 hover:bg-white/[.1]; }
+  .shell { @apply min-h-screen bg-canvas text-charcoal; }
+  .card { @apply rounded-lg border border-line bg-surface shadow-none transition duration-200 hover:shadow-soft; }
+  .card-static { @apply rounded-lg border border-line bg-surface shadow-none; }
+  .label { @apply text-[11px] font-semibold uppercase tracking-[.12em] text-muted; }
+  .field { @apply w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm text-charcoal outline-none transition placeholder:text-muted/70 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 disabled:cursor-not-allowed disabled:bg-canvas disabled:text-muted; }
+  .btn { @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/25 active:scale-[.99] disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply btn bg-brand-600 text-white hover:bg-brand-700; }
+  .btn-ghost { @apply btn border border-line bg-surface text-charcoal hover:border-brand-100 hover:bg-brand-50; }
+  .btn-danger { @apply btn border border-red-100 bg-red-50 text-red-700 hover:bg-red-100; }
+  .icon-btn { @apply inline-grid size-10 place-items-center rounded-lg border border-line bg-surface text-muted transition hover:border-brand-100 hover:bg-brand-50 hover:text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/25; }
+  .status-badge { @apply inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold; }
+  .status-success { @apply border-brand-100 bg-brand-50 text-brand-700; }
+  .status-warning { @apply border-amber-100 bg-amber-50 text-amber-700; }
+  .status-error { @apply border-red-100 bg-red-50 text-red-700; }
+  .status-neutral { @apply border-line bg-canvas text-muted; }
+  .status-brand { @apply border-brand-100 bg-brand-50 text-brand-700; }
+  .notice { @apply flex items-start gap-3 rounded-lg border px-4 py-3 text-sm leading-6; }
+  .notice-success { @apply border-brand-100 bg-brand-50 text-brand-700; }
+  .notice-warning { @apply border-amber-100 bg-amber-50 text-amber-700; }
+  .notice-error { @apply border-red-100 bg-red-50 text-red-700; }
+  .notice-loading { @apply border-line bg-surface text-muted; }
+  .skeleton { @apply animate-pulse rounded-lg bg-line/70; }
+  .table-head { @apply bg-canvas text-xs uppercase tracking-[.1em] text-muted; }
+  .table-row { @apply border-t border-line transition hover:bg-canvas/70; }
 }
